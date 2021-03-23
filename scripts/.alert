@@ -1,0 +1,17 @@
+{
+  "version": "5",
+  "groupKey": "GROUP_KEY number REPLACE_GROUP_KEY",
+  "status": "firing",
+  "receiver": "http://localhost:9393/v1/receiver",
+  "groupLabels": {"alertname": "Test number REPACE_ME"},
+  "externalURL": "http://localhost:9093",
+  "alerts": [
+    {
+      "labels": {"thing": "value"},
+      "annotations": {"hint": "how to fix foobar"},
+      "status": "firing",
+      "startsAt": "2018-06-12T01:00:00Z",
+      "endsAt": "2018-06-14T01:00:00Z"
+    }
+  ]
+}
