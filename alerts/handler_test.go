@@ -131,6 +131,18 @@ func TestReceiverHandler_ServeHTTP(t *testing.T) {
 		wantReadErr       bool
 	}{
 		{
+			name:           "successful-create-and-label",
+			method:         http.MethodPost,
+			msgAlert:       "ProcessAlertLabelTesting",
+			msgAlertStatus: "firing",
+			fakeClient: &fakeClient{
+				listIssues: []*github.Issue{
+					createIssue("TestProcessAlerts1", "body1", ""),
+				},
+			},
+			httpStatus: http.StatusOK,	
+		},
+		{
 			name:           "successful-close",
 			method:         http.MethodPost,
 			msgAlert:       "DiskRunningFull",
@@ -286,9 +298,14 @@ func TestReceiverHandler_ServeHTTP(t *testing.T) {
 
 			titleTmpl := tt.titleTmpl
 			if titleTmpl == "" {
-				titleTmpl = DefaultTitleTmpl
+				titleTmpl = `{{ .Data.GroupLabels.alertname }}`
 			}
-			rh, err := NewReceiver(tt.fakeClient, "default", true, "", nil, titleTmpl)
+			var extraLabels []string
+			var labelTmplList []string
+			var githubRepo = "default"
+			var autoClose = true
+			var resolvedLabel string
+			rh, err := NewReceiver(tt.fakeClient, githubRepo, autoClose, resolvedLabel, extraLabels, titleTmpl, labelTmplList)
 			if tt.expectReceiverErr {
 				if err == nil {
 					t.Fatal()
