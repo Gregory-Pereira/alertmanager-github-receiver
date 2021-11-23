@@ -86,7 +86,7 @@ type ReceiverHandler struct {
 
 // NewReceiver creates a new ReceiverHandler.
 func NewReceiver(client ReceiverClient, githubRepo string, autoClose bool, resolvedLabel string, extraLabels []string,
-	titleTmplStr string, labelTmplList []string) (*ReceiverHandler, error) {
+	titleTmpl string, labelsTmpl []string) (*ReceiverHandler, error) {
 	rh := ReceiverHandler{
 		Client:        client,
 		DefaultRepo:   githubRepo,
@@ -96,14 +96,14 @@ func NewReceiver(client ReceiverClient, githubRepo string, autoClose bool, resol
 	}
 
 	var err error
-	rh.TitleTmpl, err = template.New("title").Parse(titleTmplStr)
+	rh.TitleTmpl, err = template.New("title").Parse(titleTmpl)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(labelTmplList) > 0 {
+	if len(labelsTmpl) > 0 {
 		rh.LabelsTmpl = make([]*template.Template, 0)
-		for _, label := range labelTmplList {
+		for _, label := range labelsTmpl {
 			var template, err = template.New("label").Parse(label)
 			if err != nil {
 				return nil, err

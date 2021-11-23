@@ -25,6 +25,15 @@ import (
 	amtmpl "github.com/prometheus/alertmanager/template"
 )
 
+func checkForBadCharacters(basestr string, badchars ...string) (bool) {
+	for _, badchar := range badchars {
+		if strings.Contains(basestr, badchar) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestFormatIssueBody(t *testing.T) {
 	wh := createWebhookMessage("FakeAlertName", "firing", "")
 	brokenTemplate := `
@@ -48,58 +57,60 @@ func TestFormatTitleSimple(t *testing.T) {
 					Annotations: amtmpl.KV{"env": "prod", "svc": "foo"},
 				},
 				{
-					Annotations: amtmpl.KV{"env": "stage", "svc": "foo"},
+					Annotations: amtmpl.KV{"env": "stage", "svc": "foo", "testing": "true"},
 				},
 			},
 		},
 	}
 	tests := []struct {
 		testName	 string
-		tmplTxt      string
+		titleTmpl    string
 		expectErrTxt string
 		expectOutput string
 	}{
 		{
-			testName: "Success-check-annotation-foo",
-			tmplTxt: "foo",
-			expectErrTxt: "",
-			expectOutput: "foo",
-		},
-		{
-			testName: "Success-test-data-status-firing",
-			tmplTxt: "{{ .Data.Status }}",
+			testName: "Success-issue-title-one",
+			titleTmpl: `{{ .Data.Status }}`,
 			expectErrTxt: "",
 			expectOutput: "firing",
 		},
 		{
-			testName: "Succes-test-status-firing",
-			tmplTxt: "{{ .Status }}",
+			testName: "Success-issue-title-two",
+			titleTmpl: `Success-testing-issue-2`,
 			expectErrTxt: "",
-			expectOutput: "firing",
+			expectOutput: "Success-testing-issue-2",
 		},
 		{
-			testName: "Success-test-environment",
-			tmplTxt: "{{ range .Alerts }}{{ .Annotations.env }} {{ end }}",
-			expectErrTxt: "",
-			expectOutput: "prod stage ",
+			testName: "Failure-issue-title-one-parsing-bad-chars",
+			titleTmpl: `Failure-issue-title-one\"@#$%\n`,
+			expectErrTxt: `parsing error.`,
+			expectOutput: ``,
 		},
 		{
-			testName: "Failure-test-improper-label-name",
-			tmplTxt: "{{ .Foo }}",
-			expectErrTxt: "can't evaluate field Foo",
+			testName: "Success-issue-title-four",
+			titleTmpl: ``,
+			expectErrTxt: "",
+			expectOutput: "Issue created",
+		},
+		{
+			testName: "Unknown-case",
+			titleTmpl: `{{ .Data.Potato }}`,
+			expectErrTxt: "can't evaluate field Potato",
 			expectOutput: "",
 		},
 	}
+	string_interpolation_variable := "issue variable name"
+	tests[3].titleTmpl = fmt.Sprintf("Success-issue-title-with-string-interpolation: %s", string_interpolation_variable)
 
 	for testNum, tc := range tests {
 		testName := fmt.Sprintf("tc=%d", testNum)
 		t.Run(testName, func(t *testing.T) {
 			var extraLabels []string
-			var labelTmplList []string
+			var labelTemplatelList []string
 			var githubRepo = "default"
 			var autoClose = true
 			var resolvedLabel string
-			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, titleTmpl, labelTmplList)
+			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, tc.titleTmpl, labelTemplatelList)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -110,15 +121,22 @@ func TestFormatTitleSimple(t *testing.T) {
 			}
 			if tc.expectErrTxt != "" {
 				if err == nil {
-					t.Error()
+					if checkForBadCharacters(title, "\n", "\\", "\"") {
+						t.Error("parsing error.")
+					} else {
+						t.Error()
+					}
 				} else if !strings.Contains(err.Error(), tc.expectErrTxt) {
 					t.Error(err.Error())
 				}
 			}
-			if tc.expectOutput == "" && title != "" {
+			if tc.expectOutput == "" && title != "" && tc.{
+				fmt.Print("ERROR Case 3: ", err)
 				t.Error(title)
 			}
+			fmt.Print("Test Number:", testNum, "\nTitle:", title, "\nExpectedOutput:", tc.expectOutput, "\nExpectedErr:", tc.expectErrTxt, "\nBooleanContains:", strings.Contains(title, tc.expectOutput), "\nTEST END------------------\n\n")
 			if !strings.Contains(title, tc.expectOutput) {
+				fmt.Print("ERROR Case 4: ", err)
 				t.Error(title)
 			}
 		})
@@ -177,7 +195,9 @@ func TestFormatLabels(t *testing.T) {
 			var githubRepo = "default"
 			var autoClose = true
 			var resolvedLabel string
-			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, tc.testName, tc.labelsTmpl)
+			var testLabelsTemplate []string
+			testLabelsTemplate[0] = tc.labelsTmpl
+			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, tc.testName, testLabelsTemplate)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -192,11 +212,13 @@ func TestFormatLabels(t *testing.T) {
 					t.Error(err.Error())
 				}
 			}
-			if tc.expectOutput == "" && labels != "" {
+			if tc.expectOutput == "" && len(labels) != 0 {
 				t.Error(rh.TitleTmpl)
 			}
-			if !strings.Contains(labels, tc.expectOutput) {
-				t.Error(rh.TitleTmpl)
+			for _, label := range labels {
+				if !strings.Contains(label, tc.expectOutput) {
+					t.Error(rh.TitleTmpl)
+				}
 			}
 		})
 	}

@@ -88,7 +88,7 @@ func id(msg *webhook.Message) string {
 // formatTitle constructs an issue title from a webhook message.
 func (rh *ReceiverHandler) formatTitle(msg *webhook.Message) (string, error) {
 	var title bytes.Buffer
-	if err := rh.titleTmpl.Execute(&title, msg); err != nil {
+	if err := rh.TitleTmpl.Execute(&title, msg); err != nil {
 		return "", err
 	}
 	return title.String(), nil
@@ -112,8 +112,8 @@ func (rh *ReceiverHandler) formatLabels(msg *webhook.Message) ([]string, error) 
 	var ghLabels = make([]string, 0)
 
 	for _, alert := range msg.Data.Alerts {
-		for _, l := range rh.labelsTmpl {
-			if err := l.Execute(&labelBuff, alert); err != nil {
+		for _, label := range rh.LabelsTmpl {
+			if err := label.Execute(&labelBuff, alert); err != nil {
 				return []string{}, err
 			}
 			ghlabel := labelBuff.String()
