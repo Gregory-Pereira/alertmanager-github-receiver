@@ -106,7 +106,8 @@ func TestFormatTitleSimple(t *testing.T) {
 		testName := fmt.Sprintf("tc=%d", testNum)
 		t.Run(testName, func(t *testing.T) {
 			var extraLabels []string
-			var labelTemplatelList []string
+			var labelTemplatelList [1]string
+			labelTemplatelList[0] = `{{ .Data.Status }}`
 			var githubRepo = "default"
 			var autoClose = true
 			var resolvedLabel string
@@ -117,26 +118,29 @@ func TestFormatTitleSimple(t *testing.T) {
 
 			title, err := rh.formatTitle(&msg)
 			if tc.expectErrTxt == "" && err != nil {
+				fmt.Print("ERROR Case 1")
 				t.Error(err)
 			}
 			if tc.expectErrTxt != "" {
 				if err == nil {
 					if checkForBadCharacters(title, "\n", "\\", "\"") {
+						fmt.Print("ERROR Case 2")
 						t.Error("parsing error.")
 					} else {
+						fmt.Print("ERROR Case 3")
 						t.Error()
 					}
 				} else if !strings.Contains(err.Error(), tc.expectErrTxt) {
 					t.Error(err.Error())
 				}
 			}
-			if tc.expectOutput == "" && title != "" && tc.{
-				fmt.Print("ERROR Case 3: ", err)
+			if tc.expectOutput == "" && title != "" {
+				fmt.Print("ERROR Case 4: ", err)
 				t.Error(title)
 			}
 			fmt.Print("Test Number:", testNum, "\nTitle:", title, "\nExpectedOutput:", tc.expectOutput, "\nExpectedErr:", tc.expectErrTxt, "\nBooleanContains:", strings.Contains(title, tc.expectOutput), "\nTEST END------------------\n\n")
 			if !strings.Contains(title, tc.expectOutput) {
-				fmt.Print("ERROR Case 4: ", err)
+				fmt.Print("ERROR Case 5: ", err)
 				t.Error(title)
 			}
 		})
@@ -165,25 +169,25 @@ func TestFormatLabels(t *testing.T) {
 	}{
 		{
 			testName: "Success-case-one",
-			labelsTmpl: ` template: | {{ range .Alerts }} {{.Labels.foo}} {{- end}}`,
+			labelsTmpl: `{{ range .Alerts }} {{.Labels.foo}} {{- end}}`,
 			expectErrTxt: "",
 			expectOutput: "bar",
 		},
 		{
 			testName: "success-case-two",
-			labelsTmpl: ` template: | {{ .Data.Status }}`,
+			labelsTmpl: `{{ .Data.Status }}`,
 			expectErrTxt: "",
 			expectOutput: "firing",
 		},
 		{
 			testName: "Success-no-severity-label-exists",
-			labelsTmpl: ` template: | {{if .Labels.severity}} {{.Labels.severity}} {{- end}}`,
+			labelsTmpl: `{{if .Labels.severity}} {{.Labels.severity}} {{- end}}`,
 			expectErrTxt: "", 
 			expectOutput: "",
 		},
 		{
 			testName: "Failure-cant-evaluate-field-severity", 
-			labelsTmpl: ` template: | {{.Labels.severity}}`,
+			labelsTmpl: `{{.Labels.severity}}`,
 			expectErrTxt: "can't evaluate field severity",
 			expectOutput: "",
 		},
@@ -195,7 +199,7 @@ func TestFormatLabels(t *testing.T) {
 			var githubRepo = "default"
 			var autoClose = true
 			var resolvedLabel string
-			var testLabelsTemplate []string
+			var testLabelsTemplate [1]string
 			testLabelsTemplate[0] = tc.labelsTmpl
 			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, tc.testName, testLabelsTemplate)
 			if err != nil {
@@ -213,11 +217,11 @@ func TestFormatLabels(t *testing.T) {
 				}
 			}
 			if tc.expectOutput == "" && len(labels) != 0 {
-				t.Error(rh.TitleTmpl)
+				t.Error(rh.titleTmpl)
 			}
 			for _, label := range labels {
 				if !strings.Contains(label, tc.expectOutput) {
-					t.Error(rh.TitleTmpl)
+					t.Error(rh.titleTmpl)
 				}
 			}
 		})

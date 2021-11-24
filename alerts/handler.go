@@ -78,10 +78,10 @@ type ReceiverHandler struct {
 	ExtraLabels []string
 
 	// Labels template that convert alert labels to github labels.
-	LabelsTmpl []*template.Template
+	labelsTmpl []*template.Template
 
 	// titleTmpl is used to format the title of the new issue.
-	TitleTmpl *template.Template
+	titleTmpl *template.Template
 }
 
 // NewReceiver creates a new ReceiverHandler.
@@ -96,19 +96,24 @@ func NewReceiver(client ReceiverClient, githubRepo string, autoClose bool, resol
 	}
 
 	var err error
-	rh.TitleTmpl, err = template.New("title").Parse(titleTmpl)
+	// fmt.Println("initializing, titleTmp: ", titleTmpl)
+	rh.titleTmpl, err = template.New("title").Parse(titleTmpl)
 	if err != nil {
 		return nil, err
 	}
+	// fmt.Println("title inisitalized: ", rh.titleTmpl)
 
+	fmt.Println("labelsTmpl len:", len(labelsTmpl))
 	if len(labelsTmpl) > 0 {
-		rh.LabelsTmpl = make([]*template.Template, 0)
+		rh.labelsTmpl = make([]*template.Template, 0)
 		for _, label := range labelsTmpl {
 			var template, err = template.New("label").Parse(label)
 			if err != nil {
+				fmt.Println("error with template initialization: ", err)
 				return nil, err
 			}
-			rh.LabelsTmpl = append(rh.LabelsTmpl, template)
+			fmt.Println("template initialized: ", template)
+			rh.labelsTmpl = append(rh.labelsTmpl, template)
 		}
 	}
 
