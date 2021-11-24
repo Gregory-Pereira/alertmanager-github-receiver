@@ -105,7 +105,7 @@ func NewReceiver(client ReceiverClient, githubRepo string, autoClose bool, resol
 
 	fmt.Println("labelsTmpl len:", len(labelsTmpl))
 	if len(labelsTmpl) > 0 {
-		rh.labelsTmpl = make([]*template.Template, 0)
+		rh.labelsTmpl = make([]*template.Template, len(labelsTmpl))
 		for _, label := range labelsTmpl {
 			var template, err = template.New("label").Parse(label)
 			if err != nil {

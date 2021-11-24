@@ -301,7 +301,7 @@ func TestReceiverHandler_ServeHTTP(t *testing.T) {
 				titleTmpl = `{{ .Data.GroupLabels.alertname }}`
 			}
 			var extraLabels []string
-			var labelTmplList [1]string
+			var labelTmplList []string
 			labelTmplList[0] =`{{ .Data.Status }}`
 			var githubRepo = "default"
 			var autoClose = true

@@ -106,7 +106,7 @@ func TestFormatTitleSimple(t *testing.T) {
 		testName := fmt.Sprintf("tc=%d", testNum)
 		t.Run(testName, func(t *testing.T) {
 			var extraLabels []string
-			var labelTemplatelList [1]string
+			var labelTemplatelList =  make([]string, 1)
 			labelTemplatelList[0] = `{{ .Data.Status }}`
 			var githubRepo = "default"
 			var autoClose = true
@@ -199,8 +199,9 @@ func TestFormatLabels(t *testing.T) {
 			var githubRepo = "default"
 			var autoClose = true
 			var resolvedLabel string
-			var testLabelsTemplate [1]string
+			var testLabelsTemplate = make([]string, 1)
 			testLabelsTemplate[0] = tc.labelsTmpl
+
 			rh, err := NewReceiver(&fakeClient{}, githubRepo, autoClose, resolvedLabel, extraLabels, tc.testName, testLabelsTemplate)
 			if err != nil {
 				t.Fatal(err)
